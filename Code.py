@@ -12,21 +12,37 @@ def extrair_dominio(url):
     dominio = parsed_url.netloc
     return dominio
 
+def IsWordpress(Formatacao):
+    
+   
+    if 'wp-content' in Formatacao.prettify() or 'wp-admin' in Formatacao.prettify():
+        data = Formatacao.find("meta", {'property': 'article:published_time'})
+    
+        # Se a tag for encontrada, imprime o valor do atributo content
+        if data and 'content' in data.attrs:
+            data_publicacao = data.attrs['content']
+            data_sem_hora = data_publicacao.split('T')[0]
+            ano, mes, dia = data_sem_hora.split('-')
+            
+            # Inverte para o formato DD-MM-YYYY
+            data_invertida = f"{dia}-{mes}-{ano}"
+            return data_invertida
+                  
+    return False
+
+
 def Ocorrencia1(site, linha):
 
     Formatacao = BeautifulSoup (site.text, 'html.parser')
     titulo = Formatacao.title.string
     titulof = titulo.split("|")[0]
     local = None
-    #titulo.split("|")[1]
     parsed_url = urlparse(linha)  
     dominio = parsed_url.netloc       
-    data = Formatacao.find("time", itemprop="datePublished")
-    data_texto = None
-    #data.get_text().split()[0]
-    # A propriedade .title busca a tag <title> do HTML, que contém o título da página.    
+    data = IsWordpress(Formatacao)
+       
 
-    return  [titulof, dominio, local, data_texto]
+    return  [titulof, dominio, local, data]
 
 
 
@@ -36,13 +52,9 @@ def Ocorrencia2(site, linha):
     titulof = titulo.split('–')[0] 
     parsed_url = urlparse(linha)  
     dominio = parsed_url.netloc
-    data = None 
-    #Formatacao.find("span", class_="value")
-    data_texto = None 
-    #data.get_text().split()[0]
-    local = "Não encontrado "
-
-    return [titulof, dominio, local , data_texto]
+    data = IsWordpress(Formatacao)    
+    local = None
+    return [titulof, dominio, local , data]
 
 
 
@@ -52,14 +64,11 @@ def Ocorrencia3(site, linha):
     titulof = titulo.split("|")[0]
     parsed_url = urlparse(linha)  
     dominio = parsed_url.netloc
-    data = None
-    #Formatacao.find("div", class_="event_date")
-    data_texto = None
-    #data.get_text().split()[0]
-    local ="Não encontrado"
+    data = IsWordpress(Formatacao)
+    local = None
 
 
-    return [titulof, dominio, local,  data_texto ]
+    return [titulof, dominio, local,data ]
 
 
 
@@ -88,9 +97,10 @@ with open ("links3.txt", 'r' ) as file:
         response = requests.get(linha, 
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36' }, timeout=105) 
         # url, paprams, headers, cookies, auth, timeout, allow_redirects
+        
         # Extrai o domínio da URL
         dominio_extraido = extrair_dominio(linha).replace("www.","").replace("www1.", "")
-
+         
 
 
         if response.status_code == 200:
@@ -113,7 +123,6 @@ with open ("links3.txt", 'r' ) as file:
             else:
                 print("")
                 print("------")
-
                 print("nao encontrado na base de dados")
                 print(linha)
                 print(dominio_extraido)
