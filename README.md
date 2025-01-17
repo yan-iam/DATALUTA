@@ -11,7 +11,7 @@ Este é um projeto do PetComputação da UFMS juntamente com a UNB (Universidade
 1° é feito um filtro nas URLS do titulo, com 3 funções 
 | Função | Filtro |
 | ------ | ------ |
-| Ocorrencia1 | Extraindo informação do através do |  |
+| Ocorrencia1 | Extraindo informação do através do \|  |
 | Ocorrencia2 | Extraindo informação do através do - |
 | Ocorrencia3 | Sem filtro |
 
