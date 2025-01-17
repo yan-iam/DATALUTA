@@ -7,13 +7,14 @@ Este é um projeto do PetComputação da UFMS juntamente com a UNB (Universidade
 - Data
 - Local
 
-#Estratégias 
+# Estratégias 
 1° é feito um filtro nas URLS do titulo, com 3 funções 
 | Função | Filtro |
 | ------ | ------ |
 | Ocorrencia1 | Extraindo informação do através do |  |
 | Ocorrencia2 | Extraindo informação do através do - |
 | Ocorrencia3 | Sem filtro |
+
 Para isso dividi os links das matérias em 3 arquivos que correspondem esses contextos
 
 # Tecnologias
