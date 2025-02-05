@@ -1,10 +1,9 @@
 import requests
 from bs4 import BeautifulSoup
-import time
 from urllib.parse import urlparse
 import pandas as pd
 
-#----------------------------------Funções-----------------------------------------#
+#---------------------------------------------------------------------------Funções----------------------------------------------------------------------------------#
 
 def extrair_dominio(url):
     parsed_url = urlparse(url)
@@ -12,23 +11,43 @@ def extrair_dominio(url):
     dominio = parsed_url.netloc
     return dominio
 
-def IsWordpress(Formatacao):
+def IsWordpress(Formatacao):           
     
-   
-    if 'wp-content' in Formatacao.prettify() or 'wp-admin' in Formatacao.prettify():
-        data = Formatacao.find("meta", {'property': 'article:published_time'})
+    data = Formatacao.find("meta", {'property': ['article:published_time','og:updated_time' ]})
     
-        # Se a tag for encontrada, imprime o valor do atributo content
-        if data and 'content' in data.attrs:
-            data_publicacao = data.attrs['content']
-            data_sem_hora = data_publicacao.split('T')[0]
-            ano, mes, dia = data_sem_hora.split('-')
+    # Se a tag for encontrada, imprime o valor do atributo content
+    if data and 'content' in data.attrs:
+        data_publicacao = data.attrs['content']
+        data_sem_hora = data_publicacao.split('T')[0]
+        ano, mes, dia = data_sem_hora.split('-')
             
-            # Inverte para o formato DD-MM-YYYY
-            data_invertida = f"{dia}-{mes}-{ano}"
-            return data_invertida
+        #Inverte para o formato DD-MM-YYYY
+        data_invertida = f"{dia}-{mes}-{ano}"
+        return data_invertida
                   
-    return False
+    return "nao entrado Wordpress"
+
+def DataTime(Formatacao):
+    
+    data = Formatacao.find("time")["datetime"]
+    return data
+
+def Meta(Formatacao):
+    
+    meta_tag = Formatacao.find("meta", {'property': ['og:article:published_time', 'article:published_time']})
+
+    if meta_tag and 'content' in meta_tag.attrs:
+        # Extrai a data do atributo 'content' e formata
+        data_publicacao = meta_tag['content']
+        data_sem_hora = data_publicacao.split('T')[0]
+        data_sem_espaço = data_sem_hora.split(' ')[0]
+        ano, mes, dia = data_sem_espaço.split('-')
+        
+        # Formata para o formato DD-MM-YYYY
+        data_invertida = f"{dia}-{mes}-{ano}"
+        return data_invertida
+    
+    return "Não encontrado meta"
 
 
 def Ocorrencia1(site, linha):
@@ -38,9 +57,18 @@ def Ocorrencia1(site, linha):
     titulof = titulo.split("|")[0]
     local = None
     parsed_url = urlparse(linha)  
-    dominio = parsed_url.netloc       
-    data = IsWordpress(Formatacao)
-       
+    dominio = parsed_url.netloc
+
+    if 'wp-content' in Formatacao.prettify() or 'wp-admin' in Formatacao.prettify():        
+        data = IsWordpress(Formatacao)   
+
+    elif Formatacao.find("meta", {'property': ['og:article:published_time', 'article:published_time','article:modified_time']}):
+        data = Meta(Formatacao)
+
+    elif Formatacao.find("time"):
+        data = DataTime(Formatacao)
+    else:
+        data = None  
 
     return  [titulof, dominio, local, data]
 
@@ -52,7 +80,19 @@ def Ocorrencia2(site, linha):
     titulof = titulo.split('–')[0] 
     parsed_url = urlparse(linha)  
     dominio = parsed_url.netloc
-    data = IsWordpress(Formatacao)    
+    
+    if 'wp-content' in Formatacao.prettify() or 'wp-admin' in Formatacao.prettify():        
+        data = IsWordpress(Formatacao)   
+
+    elif Formatacao.find("meta", {'property': ['og:article:published_time', 'article:published_time']}):
+        data = Meta(Formatacao)
+
+    elif Formatacao.find("time"):
+        data = DataTime(Formatacao)
+       
+    else:
+        data = None   
+
     local = None
     return [titulof, dominio, local , data]
 
@@ -64,7 +104,14 @@ def Ocorrencia3(site, linha):
     titulof = titulo.split("|")[0]
     parsed_url = urlparse(linha)  
     dominio = parsed_url.netloc
-    data = IsWordpress(Formatacao)
+    if 'wp-content' in Formatacao.prettify() or 'wp-admin' in Formatacao.prettify():        
+        data = IsWordpress(Formatacao)
+        
+    elif Formatacao.find("time"):
+        data = DataTime(Formatacao)
+
+    else:
+        data = None    
     local = None
 
 
@@ -74,7 +121,7 @@ def Ocorrencia3(site, linha):
 
 
 
-#----------------------------------MAIN-----------------------------------------#
+#---------------------------------------------------------------------------MAIN----------------------------------------------------------------------------------#
 
 
 Lista1=["cimi.org.br","g1.globo.com","brasildefato.com.br","agenciabrasil.ebc.com.br", "metropoles.com",
@@ -91,7 +138,7 @@ Lista3=["uol.com.br", "oglobo.globo.com", "gov.br", "terra.com.br", "tapajósdef
 
 resultados=[]
 
-with open ("links3.txt", 'r' ) as file:
+with open ("links.txt", 'r' ) as file:
     for linha in file:        
         linha = linha.strip()        
         response = requests.get(linha, 
@@ -104,6 +151,7 @@ with open ("links3.txt", 'r' ) as file:
 
 
         if response.status_code == 200:
+            response.encoding = 'utf-8'
 
             if dominio_extraido in Lista1:
                 resultado = Ocorrencia1(response, linha)
