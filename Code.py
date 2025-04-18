@@ -28,9 +28,16 @@ def IsWordpress(Formatacao):
     return "nao entrado Wordpress"
 
 def DataTime(Formatacao):
+    # Encontra a tag <time>
+    time = Formatacao.find("time")
+    datetime_value = time.get("datetime")  # Pega o valor do atributo datetime
+    if datetime_value and datetime_value != "#":
+        data = datetime_value  # Se o datetime for válido, usa ele
+    else:
+        data = time.text.strip()  # Pega o texto dentro da tag <time>
     
-    data = Formatacao.find("time")["datetime"]
     return data
+
 
 def Meta(Formatacao):
     
@@ -48,6 +55,33 @@ def Meta(Formatacao):
         return data_invertida
     
     return "Não encontrado meta"
+
+def Divms(Formatacao):
+    data_divs = Formatacao.find_all("div", class_="ms-1")  # pega todas as divs com a classe "ms-1", no caso da agencia Para, duas.
+
+    # a função next procura todos os elementos da nossa lista, neste caso ela percorre todas as divs com class="ms-1" 
+    # contém uma data (procurando a barra '/' ou '-')
+    data_div = next((div for div in data_divs if div.text and ("/" in div.text or "-" in div.text)), None)
+
+    # Se encontrou, extrai o texto e remove espaços extras
+    data = data_div.text.strip() if data_div else None
+    return data
+
+def DivAutor(Formatacao):
+    data_texto = Formatacao.find("div", class_="AutorDataPublicacao")
+    data_texto = data_texto.text.strip()
+    data = data_texto.split(" | ")[1]
+    return data
+
+def DivNews(Formatacao):
+    data_texto = Formatacao.find("div", class_="news-publishinfo")
+    data = data_texto.find("p").text.strip()
+    return data
+
+def DataSpan(Formatacao):
+    data_texto =  Formatacao.find("span")
+    data = data_texto.text.strip()
+    return data
 
 
 def Ocorrencia1(site, linha):
@@ -67,6 +101,10 @@ def Ocorrencia1(site, linha):
 
     elif Formatacao.find("time"):
         data = DataTime(Formatacao)
+    
+    elif Formatacao.find("div", class_="ms-1"):
+        data = Divms(Formatacao)
+
     else:
         data = None  
 
@@ -89,6 +127,12 @@ def Ocorrencia2(site, linha):
 
     elif Formatacao.find("time"):
         data = DataTime(Formatacao)
+
+    elif Formatacao.find("div", class_="AutorDataPublicacao"):
+        data = DivAutor(Formatacao)
+    
+    elif Formatacao.find("div", class_="news-publishinfo"):
+        data = DivNews(Formatacao)
        
     else:
         data = None   
@@ -109,6 +153,9 @@ def Ocorrencia3(site, linha):
         
     elif Formatacao.find("time"):
         data = DataTime(Formatacao)
+    
+    elif Formatacao.find("span"):
+        data = DataSpan(Formatacao)
 
     else:
         data = None    
@@ -138,7 +185,7 @@ Lista3=["uol.com.br", "oglobo.globo.com", "gov.br", "terra.com.br", "tapajósdef
 
 resultados=[]
 
-with open ("links.txt", 'r' ) as file:
+with open ("links3.txt", 'r') as file:
     for linha in file:        
         linha = linha.strip()        
         response = requests.get(linha, 
@@ -182,7 +229,3 @@ df = pd.DataFrame(resultados, columns=["Título", "Mídia", "Local", "Data"])
 df.to_excel("resultados.xlsx", index=False)
 
 print("Resultados exportados para resultados.xlsx")
-
-
-
-
